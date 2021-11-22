@@ -1,0 +1,96 @@
+---
+output:
+  html_document:
+    self_contained: false
+    lib_dir: "../site/venue/libs"
+params:
+  venue: "Théâtre De Bordeaux"
+  venue_id: 7
+title: "`r params$venue`"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(DT)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
+
+documents <- read_csv("../data/processed/db_tables/document.csv")
+venues <- read_csv("../data/processed/db_tables/venue.csv")
+performances <- read_csv("../data/processed/db_tables/performance.csv", col_types = "cncccccccD")
+works <- read_csv("../data/processed/db_tables/work.csv")
+genres <- read_csv("../data/processed/db_tables/genre.csv")
+persons <- read_csv("../data/processed/db_tables/person.csv")
+document_has_venue <- read_csv("../data/processed/db_tables/document_has_venue.csv")
+document_has_performance <- read_csv("../data/processed/db_tables/document_has_performance.csv")
+performance_has_work <- read_csv("../data/processed/db_tables/performance_has_work.csv")
+person_has_performance <- read_csv("../data/processed/db_tables/person_has_performance.csv")
+work_has_person <- read_csv("../data/processed/db_tables/work_has_person.csv")
+work_has_genre <- read_csv("../data/processed/db_tables/work_has_genre.csv")
+
+```
+
+# Location
+The location for this venue has been given as:
+```{r}
+locations <- venues %>%
+  filter(venue_id == params$venue_id) %>%
+  drop_na()
+
+if(nrow(locations) > 0) {
+  venues %>%
+    filter(venue_id == params$venue_id) %>%
+    separate_rows(location, sep = ";") %>%
+    select(Location = location) %>%
+    datatable()  
+} else {
+  cat("None provided")
+}
+
+```
+
+# Documents
+```{r}
+docs <- venues %>%
+  filter(venue_id == params$venue_id) %>%
+  left_join(document_has_venue) %>%
+  left_join(documents) %>%
+  mutate(
+    Date = date,
+    Document = ifelse(!is.na(title), paste0("<a href='../document/", doc_id, ".html'>", title, "</a>"), ""),
+    `Original Document` = ifelse(!is.na(links), paste0("<a href='", links, "'>Original Document</a>"), "")
+  ) %>%
+  select(
+    Date,
+    Document,
+    `Original Document`
+  )
+
+datatable(docs, escape = FALSE)
+```
+
+# Performances
+```{r}
+perf <- venues %>%
+  filter(venue_id == params$venue_id) %>%
+  left_join(performances) %>%
+  mutate(Date = floor_date(date, "months")) %>%
+  group_by(Date) %>%
+  tally()
+
+if(nrow(perf) > 1) {
+  ggplot(perf, aes(x = Date, y = n)) +
+  geom_line() +
+  geom_point() +
+  theme_minimal() +
+  labs(
+    title = "Performances Each Month",
+    x = "",
+    y = ""
+  )  
+} else {
+  datatable(perf)
+}
+
+```

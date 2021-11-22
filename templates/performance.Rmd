@@ -1,0 +1,114 @@
+---
+output:
+  html_document:
+    self_contained: false
+    lib_dir: "../site/performance/libs"
+params:
+  performance: "Sunday, September 05, 1784 at Variétés Amusantes"
+  performance_id: "000005000002000001"
+title: "`r params$performance`"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(igraph)
+library(ggnetwork)
+library(DT)
+library(kableExtra)
+
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
+
+documents <- read_csv("../data/processed/db_tables/document.csv")
+venues <- read_csv("../data/processed/db_tables/venue.csv")
+performances <- read_csv("../data/processed/db_tables/performance.csv", col_types = "cncccccccD")
+works <- read_csv("../data/processed/db_tables/work.csv")
+genres <- read_csv("../data/processed/db_tables/genre.csv")
+persons <- read_csv("../data/processed/db_tables/person.csv")
+document_has_venue <- read_csv("../data/processed/db_tables/document_has_venue.csv")
+document_has_performance <- read_csv("../data/processed/db_tables/document_has_performance.csv")
+performance_has_work <- read_csv("../data/processed/db_tables/performance_has_work.csv")
+person_has_performance <- read_csv("../data/processed/db_tables/person_has_performance.csv")
+work_has_person <- read_csv("../data/processed/db_tables/work_has_person.csv")
+work_has_genre <- read_csv("../data/processed/db_tables/work_has_genre.csv")
+
+```
+
+```{r}
+perf_info <- performances %>%
+  filter(performance_id == params$performance_id) %>%
+  left_join(venues) %>%
+  mutate(venue = str_to_title(venue)) %>%
+  left_join(document_has_performance)
+```
+
+## Document
+Information for the document with this performance is [here](`r paste0("../document/", unique(perf_info$doc_id)[1], ".html")`).
+
+## Works and Performers
+```{r}
+perf_people <- perf_info %>%
+  left_join(performance_has_work) %>%
+  left_join(person_has_performance) %>%
+  left_join(works) %>%
+  left_join(persons) %>%
+  mutate(
+    role = str_to_title(role),
+    venue_link = paste0("<a href='../venue/", venue_id, ".html'>", str_to_title(venue), "</a>"),
+    work_link = paste0("<a href='../work/", work_id, ".html'>", str_to_title(work), "</a>"),
+    person_link = paste0("<a href='../person/", person_id, ".html'>", person, "</a>")
+  ) %>%
+  arrange(
+    order,
+    person_id
+  )
+
+perf_people %>%
+  mutate(
+    work_link = ifelse(is.na(work_id), " --- ", work_link),
+    person_link = ifelse(is.na(person_id), " --- ", person_link),
+    role = ifelse(is.na(role), " --- ", role),
+    char_role = ifelse(is.na(char_role), " --- ", char_role)
+  ) %>%
+  select(
+    Venue = venue_link,
+    Work = work_link,
+    Person = person_link,
+    Role = role,
+    Character = char_role
+  ) %>%
+  ungroup() %>%
+  kable("html", escape = FALSE) %>%
+  kable_material() %>%
+  collapse_rows(columns = 1:3, valign = "top")
+
+```
+
+## Genres
+```{r}
+perf_genre <- perf_info %>%
+  left_join(performance_has_work) %>%
+  left_join(works) %>%
+  left_join(work_has_genre) %>%
+  left_join(genres) %>%
+  arrange(order, work, genre) %>%
+  mutate(
+    work_link = paste0("<a href='../work/", work_id, ".html'>", str_to_title(work), "</a>"),
+    genre_link = paste0("<a href='../genre/", genre_id, ".html'>", str_to_title(genre), "</a>")
+  ) %>%
+  mutate(
+    genre_link = ifelse(is.na(genre_id), " --- ", genre_link)
+  ) %>%
+  distinct(
+    Work = str_to_title(work), 
+    Genre = genre_link
+  )
+
+if (nrow(drop_na(perf_genre)) >= 1) {
+  perf_genre %>%
+    mutate(Work = "") %>%
+    kable(escape = FALSE) %>%
+    kable_material() %>%
+    pack_rows(index = table(perf_genre$Work), escape = TRUE, label_row_css = "background-color: #d1d1d1")
+}  
+
+```

@@ -1,0 +1,134 @@
+---
+output:
+  html_document:
+    self_contained: false
+    lib_dir: "../site/person/libs"
+params:
+  person: "Sevin"
+  person_id: 13
+title: "`r params$person`"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(igraph)
+library(ggnetwork)
+library(DT)
+
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
+
+documents <- read_csv("../data/processed/db_tables/document.csv")
+venues <- read_csv("../data/processed/db_tables/venue.csv")
+performances <- read_csv("../data/processed/db_tables/performance.csv", col_types = "cncccccccD")
+works <- read_csv("../data/processed/db_tables/work.csv")
+genres <- read_csv("../data/processed/db_tables/genre.csv")
+persons <- read_csv("../data/processed/db_tables/person.csv")
+document_has_venue <- read_csv("../data/processed/db_tables/document_has_venue.csv")
+document_has_performance <- read_csv("../data/processed/db_tables/document_has_performance.csv")
+performance_has_work <- read_csv("../data/processed/db_tables/performance_has_work.csv")
+person_has_performance <- read_csv("../data/processed/db_tables/person_has_performance.csv")
+work_has_person <- read_csv("../data/processed/db_tables/work_has_person.csv")
+work_has_genre <- read_csv("../data/processed/db_tables/work_has_genre.csv")
+
+```
+
+```{r}
+person_info <- persons %>%
+  filter(person_id == params$person_id) %>%
+  left_join(person_has_performance) %>%
+  left_join(works) %>%
+  left_join(performances) %>%
+  left_join(venues) %>%
+  mutate(
+    perf_link = paste0("<a href='../performance/", performance_id, ".html'>Performance</a>"),
+    work_link = paste0("<a href='../work/", work_id, ".html'>", work, "</a>"),
+    venue_link = paste0("<a href='../venue/", venue_id, ".html'>", venue, "</a>")
+  )
+
+```
+
+# Biographical Information
+## Links
+
+# Performances
+```{r}
+person_info %>%
+  select(
+    Date = date,
+    `Link to Performance` = perf_link,
+    Venue = venue_link,
+    Work = work_link,
+    Role = role,
+    Character = char_role
+  ) %>%
+  mutate(Character = ifelse(is.na(Character), "", Character),
+         Role = str_to_title(Role)) %>%
+  datatable(escape = FALSE)
+```
+
+# Collaborators
+```{r}
+person_info %>%
+  select(
+    date, 
+    performance_id,
+    perf_link,
+    work_link,
+    venue_link
+  ) %>%
+  left_join(person_has_performance) %>%
+  left_join(persons) %>%
+  left_join(performances) %>%
+  filter(!(person_id %in% person_info$person_id)) %>%
+  mutate(person_link = paste0("<a href='", person_id, ".html'>", person, "</a>")) %>%
+  select(
+    Person = person_link,
+    Date = date,
+    `Link to Performance` = perf_link,
+    Work = work_link,
+    Role = role,
+    Character = char_role
+  ) %>%
+  mutate(Character = ifelse(is.na(Character), "", Character),
+         Role = str_to_title(Role)) %>%
+  datatable(escape = FALSE)
+```
+
+
+
+```{r}
+person_network <- person_has_performance %>%
+  distinct(performance_id, person_id) %>%
+  filter(performance_id %in% c(person_info$performance_id)) %>%
+  left_join(distinct(person_has_performance, performance_id, person_id), by = "performance_id") %>%
+  left_join(persons, by = c("person_id.x" = "person_id")) %>%
+  left_join(persons, by = c("person_id.y" = "person_id")) %>%
+  group_by(person_one = person.x,
+           person_two = person.y) %>%
+  tally() %>%
+  mutate(n = ifelse(person_one == person_two, 0, n)) %>%
+  pivot_wider(names_from = person_two,
+              values_from = n, 
+              values_fill = 0) %>%
+  select(c(person_one, as.character(unique(.$person_one)))) %>%
+  column_to_rownames("person_one") %>%
+  as.matrix() %>%
+  igraph::graph_from_adjacency_matrix(mode = "undirected", weighted = TRUE)
+
+person_gg <- person_network %>%
+  ggnetwork()
+
+if(nrow(person_gg) > 1) {
+  p <- ggplot(person_gg, aes(name = name, x = x, y = y, xend = xend, yend = yend)) +
+    geom_point() +
+    geom_text(aes(label = ifelse(name == params$person, name, ""))) +
+    geom_edges(size = 0.2, alpha = 0.2) +
+    theme_blank() +
+    labs(
+      title = "Network of Collaborators"
+    )
+  
+  plotly::ggplotly(p = p, tooltip = "name") 
+}
+
+```

@@ -1,0 +1,169 @@
+---
+output:
+  html_document:
+    self_contained: false
+    lib_dir: "../site/genre/libs"
+params:
+  genre: "Grand Ballet"
+  genre_id: 13
+title: "`r params$genre`"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(igraph)
+library(plotly)
+library(ggnetwork)
+library(DT)
+library(lubridate)
+
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
+
+documents <- read_csv("../data/processed/db_tables/document.csv")
+venues <- read_csv("../data/processed/db_tables/venue.csv")
+performances <- read_csv("../data/processed/db_tables/performance.csv", col_types = "cncccccccD")
+works <- read_csv("../data/processed/db_tables/work.csv")
+genres <- read_csv("../data/processed/db_tables/genre.csv")
+persons <- read_csv("../data/processed/db_tables/person.csv")
+document_has_venue <- read_csv("../data/processed/db_tables/document_has_venue.csv")
+document_has_performance <- read_csv("../data/processed/db_tables/document_has_performance.csv")
+performance_has_work <- read_csv("../data/processed/db_tables/performance_has_work.csv")
+person_has_performance <- read_csv("../data/processed/db_tables/person_has_performance.csv")
+work_has_person <- read_csv("../data/processed/db_tables/work_has_person.csv")
+work_has_genre <- read_csv("../data/processed/db_tables/work_has_genre.csv")
+
+```
+
+# Works
+Works tagged as `r str_to_title(params$genre)` include:
+
+```{r results='asis'}
+works_with_genre <- work_has_genre %>%
+  filter(genre_id == params$genre_id) %>%
+  left_join(genres) %>%
+  left_join(works) %>%
+  mutate(
+    work_link = paste0("<a href='../work/", work_id, ".html'>", str_to_title(work), "</a>")
+  ) %>%
+  arrange(work)
+
+if(nrow(works_with_genre) > 0) {
+  for(i in 1:nrow(works_with_genre)) {
+    cat(paste0("- [", works_with_genre$work[i], "](../work/", works_with_genre$work_id[i], ".html)"), sep = "\n")  
+  }
+}
+```
+
+# Performances
+```{r}
+perfs <- works_with_genre %>%
+  left_join(performance_has_work) %>%
+  left_join(performances) %>%
+  left_join(venues) %>%
+  left_join(document_has_performance) %>%
+  mutate(
+    year = floor_date(date, "years"),
+    doc_link = paste0("<a href='../document/", doc_id, ".html'>Document</a>"),
+    perf_link = paste0("<a href='../performance/", performance_id, ".html'>Performance</a>"),
+    venue_link = paste0("<a href='../venue/", venue_id, ".html'>", str_to_title(venue), "</a>")
+  ) %>%
+  arrange(date, doc_id, performance_id, order)
+
+perfs %>%
+  select(
+    Date = date,
+    Document = doc_link,
+    Performance = perf_link,
+    Venue = venue_link,
+    Work = work_link,
+  ) %>%
+  datatable(escape = FALSE)
+```
+
+# Performances Over Time
+```{r}
+if(nrow(perfs) > 0) {
+  p <- perfs %>%
+    group_by(year) %>%
+    tally() %>%
+    mutate(text = paste0(year(year), ": ", n)) %>%
+    ggplot(aes(x = year, y = n)) +
+    geom_line(size = 0.3) +
+    geom_point(aes(text = text), size = 1) +
+    theme_minimal() +
+    labs(
+      x = "",
+      y = "Number of Performances"
+    )
+  
+  ggplotly(p = p, tooltip = c("text")) 
+}
+
+```
+
+
+# Associated Genres
+The following genres are associated with works that are tagged with `r params$genre`:
+
+```{r results='asis'}
+other_genres <- works_with_genre %>%
+  select(work_id) %>%
+  left_join(work_has_genre) %>%
+  rename(genre_id_x = genre_id) %>%
+  left_join(work_has_genre) %>%
+  rename(genre_id_y = genre_id) %>%
+  distinct(genre_id_y) %>%
+  left_join(genres, by = c("genre_id_y" = "genre_id")) %>%
+  filter(genre_id_y != params$genre_id) %>%
+  arrange(genre)
+
+
+if(nrow(other_genres) > 0) {
+  for(i in 1:nrow(other_genres)) {
+    cat(paste0("- [", other_genres$genre[i], "](../genre/", other_genres$genre_id_y[i], ".html)"), sep = "\n")  
+  }
+}
+
+```
+
+
+```{r}
+associated <- works_with_genre %>%
+  select(work_id) %>%
+  left_join(work_has_genre) %>%
+  rename(genre_id_x = genre_id) %>%
+  left_join(work_has_genre) %>%
+  rename(genre_id_y = genre_id) %>%
+  group_by(genre_id_x, genre_id_y) %>%
+  tally() %>%
+  mutate(n = ifelse(genre_id_x == genre_id_y, 0, n)) %>%
+  left_join(genres, by = c("genre_id_x" = "genre_id")) %>%
+  rename(genre_x = genre) %>%
+  left_join(genres, by = c("genre_id_y" = "genre_id")) %>%
+  rename(genre_y = genre) %>%
+  ungroup() %>%
+  select(genre_x, genre_y, n) %>%
+  pivot_wider(names_from = genre_y,
+              values_from = n, 
+              values_fill = 0) %>%
+  select(c(genre_x, as.character(unique(.$genre_x)))) %>%
+  column_to_rownames("genre_x") %>%
+  as.matrix() %>%
+  igraph::graph_from_adjacency_matrix(mode = "undirected", weighted = TRUE)
+
+vertex_attr(associated, "degree") <-  degree(associated)
+
+associated_gg <- associated %>%
+  ggnetwork()
+
+if(nrow(associated_gg) > 1) {
+  p <- ggplot(associated_gg, aes(text = name, x = x, y = y, xend = xend, yend = yend)) +
+    geom_edges(aes(size = weight), alpha = 0.3) +
+    geom_point(aes(size = degree), color = "steelblue") +
+    geom_text(aes(label = ifelse(name == params$genre, name, ""))) +
+    scale_size_continuous(range = c(0.2, 3)) +
+    theme_blank()
+  
+  plotly::ggplotly(p = p, tooltip = "text") 
+}
+```
