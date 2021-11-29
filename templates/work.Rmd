@@ -12,6 +12,7 @@ title: "`r params$work`"
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(lubridate)
+library(padr)
 library(DT)
 library(plotly)
 
@@ -64,7 +65,11 @@ perf <- works %>%
   mutate(date = floor_date(date, "months")) %>%
   group_by(date) %>%
   tally() %>%
-  mutate(label = paste0(format(date, "%b %Y"), ": ", n)) %>%
+  pad(interval = "month") %>%
+  mutate(
+    n = ifelse(is.na(n), 0, n),
+    label = paste0(format(date, "%b %Y"), ": ", n)
+    ) %>%
   filter(!is.na(date))
 
 if(nrow(perf) > 0) {

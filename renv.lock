@@ -527,6 +527,13 @@
       "Repository": "CRAN",
       "Hash": "5406fd37ef0bf9b88c8a4f264d6ec220"
     },
+    "padr": {
+      "Package": "padr",
+      "Version": "0.6.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "36099d0a3dea2691e26ba6d5f6c5e09d"
+    },
     "pillar": {
       "Package": "pillar",
       "Version": "1.6.4",
