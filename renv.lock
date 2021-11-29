@@ -51,6 +51,13 @@
       "Repository": "CRAN",
       "Hash": "e031418365a7f7a766181ab5a41a5716"
     },
+    "RMariaDB": {
+      "Package": "RMariaDB",
+      "Version": "1.1.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "b322f12caf09f9548ab91dc27c42159a"
+    },
     "Rcpp": {
       "Package": "Rcpp",
       "Version": "1.0.7",
@@ -533,6 +540,20 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "01f28d4278f15c76cddbea05899c5d6f"
+    },
+    "plogr": {
+      "Package": "plogr",
+      "Version": "0.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "09eb987710984fc2905c7129c7d85e65"
+    },
+    "plotly": {
+      "Package": "plotly",
+      "Version": "4.10.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "fbb11e44d057996ca5fe40d959cacfb0"
     },
     "prettyunits": {
       "Package": "prettyunits",
