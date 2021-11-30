@@ -24,7 +24,7 @@ df <- read_csv(params$cat_file)
 ```{r results='asis'}
 if(nrow(df) > 0) {
   for(i in 1:nrow(df)) {
-    cat(paste0("- [", df[[params$display_var]][i], "](/site/", params$cat_folder,"/", df[[params$link_var]][i], ".html)"), sep = "\n")  
+    cat(paste0("- [", df[[params$display_var]][i], "](/", params$cat_folder,"/", df[[params$link_var]][i], ".html)"), sep = "\n")  
   }
 }
 
