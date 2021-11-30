@@ -3,6 +3,8 @@ output:
   html_document:
     self_contained: false
     lib_dir: "../site/venue/libs"
+    includes:
+      before_body: "../site/navbar.html"
 params:
   venue: "Théâtre De Bordeaux"
   venue_id: 7

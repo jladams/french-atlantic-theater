@@ -3,6 +3,8 @@ output:
   html_document:
     self_contained: false
     lib_dir: "../site/performance/libs"
+    includes:
+      before_body: "../site/navbar.html"
 params:
   performance: "Sunday, September 05, 1784 at Variétés Amusantes"
   performance_id: "000005000002000001"

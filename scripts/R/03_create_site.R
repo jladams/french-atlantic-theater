@@ -13,6 +13,14 @@ perf_venue <- performances %>%
   left_join(venues) %>%
   mutate(performance = paste0(format(date, "%A, %B %d, %Y"), " at ", str_to_title(venue)))
 
+# About --------
+rmarkdown::render(
+  input = "./templates/about.Rmd",
+  output_dir = "./site",
+  output_file = "about.html",
+  quiet = TRUE
+)
+
 # Documents -------
 lapply(1:nrow(documents), function(i) {
   print(paste0("Document ", i))

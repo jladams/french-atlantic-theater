@@ -3,6 +3,8 @@ output:
   html_document:
     self_contained: false
     lib_dir: "../site/work/libs"
+    includes:
+      before_body: "../site/navbar.html"    
 params:
   work: "ariettes Anglaises"
   work_id: 176

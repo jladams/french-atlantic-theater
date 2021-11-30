@@ -3,6 +3,8 @@ output:
   html_document:
     self_contained: false
     lib_dir: "../site/person/libs"
+    includes:
+      before_body: "../site/navbar.html"
 params:
   person: "Sevin"
   person_id: 13

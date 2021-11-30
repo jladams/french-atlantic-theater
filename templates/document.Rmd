@@ -3,12 +3,16 @@ output:
   html_document:
     self_contained: false
     lib_dir: "../site/document/libs"
+    includes:
+      before_body: "../site/navbar.html"
 params:
   document: "Journal de Guienne"
   document_subtitle: "Wednesday, September 01, 1784"
   document_id: 1
 title: "`r params$document`"
 subtitle: "`r params$document_subtitle`"
+
+
 ---
 
 ```{r setup, include=FALSE}
