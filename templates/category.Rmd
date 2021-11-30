@@ -1,0 +1,31 @@
+---
+params:
+  category: "Venues"
+  cat_folder: "venue"
+  cat_file: "../data/processed/db_tables/venue.csv"
+  display_var: "venue"
+  link_var: "venue_id"
+title: "Category: `r params$category`"
+output: 
+  html_document:
+    includes:
+      before_body: "../site/navbar.html" 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
+library(tidyverse)
+```
+
+```{r}
+df <- read_csv(params$cat_file)
+```
+
+```{r results='asis'}
+if(nrow(df) > 0) {
+  for(i in 1:nrow(df)) {
+    cat(paste0("- [", df[[params$display_var]][i], "](/site/", params$cat_folder,"/", df[[params$link_var]][i], ".html)"), sep = "\n")  
+  }
+}
+
+```

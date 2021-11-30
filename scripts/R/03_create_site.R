@@ -13,6 +13,9 @@ perf_venue <- performances %>%
   left_join(venues) %>%
   mutate(performance = paste0(format(date, "%A, %B %d, %Y"), " at ", str_to_title(venue)))
 
+write_csv(perf_venue, "./data/processed/perf_venue.csv")
+
+
 # About --------
 rmarkdown::render(
   input = "./templates/about.Rmd",
@@ -20,6 +23,31 @@ rmarkdown::render(
   output_file = "about.html",
   quiet = TRUE
 )
+
+# Category Pages -----------
+category_df <- tibble(
+  category = c("Documents", "Genres", "Performances", "Persons", "Venues", "Works"),
+  cat_folder = c("document", "genre", "performance", "person", "venue", "work"),
+  cat_file = c("../data/processed/db_tables/document.csv", "../data/processed/db_tables/genre.csv", "../data/processed/perf_venue.csv", "../data/processed/db_tables/person.csv", "../data/processed/db_tables/venue.csv", "../data/processed/db_tables/work.csv"),
+  display_var = c("doc_title", "genre", "performance", "person", "venue", "work"),
+  link_var = c("doc_id", "genre_id", "performance_id", "person_id", "venue_id", "work_id")
+)
+
+lapply(1:nrow(category_df), function(i) {
+  rmarkdown::render(
+    input = "./templates/category.Rmd",
+    output_dir = paste0("./site/", category_df$cat_folder[i]),
+    output_file = "index.html",
+    params = list(
+      category = category_df$category[i],
+      cat_folder = category_df$cat_folder[i],
+      cat_file = category_df$cat_file[i],
+      display_var = category_df$display_var[i],
+      link_var = category_df$link_var[i]
+    )
+  )
+})
+
 
 # Documents -------
 lapply(1:nrow(documents), function(i) {
