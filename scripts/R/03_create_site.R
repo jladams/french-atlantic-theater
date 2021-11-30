@@ -1,8 +1,7 @@
 library(tidyverse)
 library(rmarkdown)
 
-documents <- read_csv("./data/processed/db_tables/document.csv") %>%
-  mutate(doc_title = paste0(title, " - ", format(date, "%A, %B %d, %Y")))
+documents <- read_csv("./data/processed/db_tables/document.csv")
 venues <- read_csv("./data/processed/db_tables/venue.csv")
 performances <- read_csv("./data/processed/db_tables/performance.csv", col_types = "cncccccccD")
 works <- read_csv("./data/processed/db_tables/work.csv")

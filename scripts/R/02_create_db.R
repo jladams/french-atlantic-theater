@@ -41,7 +41,8 @@ documents <- df %>%
   mutate(SECTION = ifelse(SECTION == "NA", NA, SECTION)) %>%
   distinct() %>%
   full_join(doc_meta, by = "doc_id") %>%
-  rename_with(str_to_lower)
+  rename_with(str_to_lower) %>%
+  mutate(doc_title = paste0(title, " - ", format(date, "%A, %B %d, %Y")))
 
 venue_locations <- df %>%
   select(doc_id, venue_id, Tag, Word) %>%
