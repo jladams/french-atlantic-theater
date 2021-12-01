@@ -159,7 +159,6 @@ yearly_opera <- opera %>%
   group_by(year, work) %>%
   tally() %>%
   pivot_wider(names_from = year, values_from = n) %>%
-  mutate(`1788-01-01` = 0) %>%
   pivot_longer(-work, names_to = "year", values_to = "n") %>%
   mutate(year = as.Date(year), n = ifelse(is.na(n), 0, n))
 
