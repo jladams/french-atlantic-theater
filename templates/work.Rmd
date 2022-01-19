@@ -59,6 +59,22 @@ works %>%
 
 # Performances Over Time
 ```{r}
+annual_perf <- works %>%
+  filter(work_id == params$work_id) %>%
+  left_join(performance_has_work) %>%
+  left_join(performances) %>%
+  distinct(date, performance_id) %>%
+  mutate(date = floor_date(date, "years")) %>%
+  group_by(date) %>%
+  tally() %>%
+  pad(interval = "year") %>%
+  mutate(
+    n = ifelse(is.na(n), 0, n),
+    label = paste0(format(date, "%Y"), ": ", n)
+    ) %>%
+  filter(!is.na(date))
+
+
 perf <- works %>%
   filter(work_id == params$work_id) %>%
   left_join(performance_has_work) %>%
@@ -74,7 +90,20 @@ perf <- works %>%
     ) %>%
   filter(!is.na(date))
 
-if(nrow(perf) > 0) {
+
+if(nrow(annual_perf) > 1) {
+  p <- ggplot(annual_perf, aes(x = date, y = n)) + 
+    geom_line() +
+    geom_point(aes(text = label)) +
+    theme_minimal() +
+    labs(
+      title = "Yearly Performances",
+      x = "",
+      y = ""
+    ) 
+  
+  plotly::ggplotly(p = p, tooltip = "text")
+} else if(nrow(perf) > 0) {
   p <- ggplot(perf, aes(x = date, y = n)) + 
     geom_line() +
     geom_point(aes(text = label)) +
@@ -87,6 +116,7 @@ if(nrow(perf) > 0) {
   
   plotly::ggplotly(p = p, tooltip = "text")
 }
+
 
 ```
 

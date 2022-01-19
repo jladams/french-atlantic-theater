@@ -1,5 +1,5 @@
 ---
-title: "About Bordeaux Performance Repertoire (1784-1793)"
+title: "About Bordeaux's Theater Culture"
 output:
   html_document:
     includes:
@@ -10,14 +10,11 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-
 This project seeks to re-create the advertised repertoire of Bordeaux's performance venues. In this reconstructed repertoire, we find works staged at Bordeaux's premiere venue, the [Grand Théâtre de Bordeaux](https://www.opera-bordeaux.com/en/visite-grand-theatre), alongside performances of travelling performers. From acrobatic troupes to equestrian shows, animal menageries to pyrotechnic displays, this database offers a cross section of Bordeaux's performance culture.<br>
-
-Certain pages in this dataset reveal the history of Bordeaux's performance culture. For instance, we discover in the performances of Beaumarchais' *Le Mariage de Figaro* a transition in political control, from a pre-Revolutionary period of censorship to a post-Revolutionary period of artistic freedom. The data from Revolutionary performances, however, complicate this narrative. On the one hand, the Revolutionary plays - *Brutus*, *La Mort de César* and *Guillaume Tell* - become more popular after 1789. On the other, the counter-Revolutionary play *L'Ami des lois* also garnered attention. Its performance even lead to the incarceration of actors who performed at the *Grand-Théâtre*. By examining the venues where plays were performed, we can possibly discover the political orientation of theatrical troupes. We might also see in abrupt transitions in repertoire the political influence of Revolutionary administrators. This dataset, unfortunately, does not extend into the transition of power from the moderate Girondin politicians from Bordeaux to the progressive, and militant Jacobin Military commission from Paris.<br>
 
 ## Motivation
 
-This digital work adds context to Scott Sanders' manuscript project, entitled *In Nature's Darkness: The Black Atlantic on French Stages*. Sanders' work in progress examines how eighteenth-century French theater responded to the increasing presence of the Black Atlantic in French Atlantic spaces. In this study, Sanders traces three stages of representational strategies: from colonial attempts to control the Black and French Atlantic, through an implicit recognition of the Black Atlantic’s presence in domestic spaces, to an overt celebration of the Black Atlantic’s role in Republican life. The *Bordeaux Performance Repertoire* database will help identify theatrical networks that spanned the French and possibly even Black Atlantic worlds such as the actor, director and playwright, François-Marie Mayeur de Saint-Paul, who performed in Bordeaux as well as Saint-Domingue.<br>
+This digital work adds context to Scott Sanders' manuscript project, entitled *In Nature's Darkness: The Black Atlantic on French Stages*. Sanders' work in progress examines how eighteenth-century French theater responded to the increasing presence of the Black Atlantic in French Atlantic spaces. In this study, Sanders traces three stages of representational strategies: from colonial attempts to control the Black and French Atlantic, through an implicit recognition of the Black Atlantic’s presence in domestic spaces, to an overt celebration of the Black Atlantic’s role in Republican life. The *Bordeaux Performance Repertoire* database will help identify theatrical networks that spanned the French and possibly even Black Atlantic worlds such as the actor, director and playwright, [François-Marie Mayeur de Saint-Paul](http://frenchatlantictheater.host.dartmouth.edu/person/463.html), who performed in Bordeaux as well as Saint-Domingue.<br>
 
 ## Dataset
 
@@ -26,14 +23,14 @@ The performances in this reconstructed repertoire appear in three newspapers: *J
 ## Workflow
 
 ```{r out.width='40%', out.extra='style="float:right; padding:10px"'}
-knitr::include_graphics("../site/images/Spectacles.png")
+knitr::include_graphics("/Users/f00230z/Dropbox (Dartmouth College)/Bordeaux Archive/Spectacles.png")
 ```
 
 This project follows the ethos of the [minimal computing](https://go-dh.github.io/mincomp/about/) movement in so far as three individuals, with limited outside resources, produced the dataset, database and resulting website. Here we provide a narrative of the project's genesis in the hope that it will serve as a roadmap for scholars to create their own projects.<br>
 
 To generate the raw data, Sanders extracted from a collection of over 3,000 newspapers theatrical information that appeared at the end of each issue, under the rubric *Spectacles*. He first scraped the OCR (optical character recognition) layer of the pdfs and collated them into a dataframe (i.e. spreadsheet). For each date, he  removed any text that was unrelated to performance. After the raw data was narrowed down to theatrical information, the next step proved the most difficult. He tried to find an approach that would organize unstructured data. Given that OCR packages such as tesseract unevenly render pre-19th century print into legible texts, he first experimented with processes that would improve the OCR; namely, the software packages [Pytesseract](https://pypi.org/project/pytesseract/), [Calamari](https://pypi.org/project/calamari-ocr/), [OCRopus](https://github.com/ocropus/ocropy), and [Google Cloud Vision](https://cloud.google.com/vision/docs/pdf). These attempts, however, led to middling results. His next experiment involved formatting changes. Since these advertisements italicize theatrical works, he  turned to [Google Doc's API](https://developers.google.com/docs/api/samples/output-json) to identify italicized words. While this approach worked, it led to an unwieldy amount of data manipulation. He finally decided on a Natural Language Processing approach that did not require any improvements to OCR.<br>
 ```{r out.width='70%', out.extra='style="float:left; padding:10px"'}
-knitr::include_graphics("../site/images/processed_ad.png")
+knitr::include_graphics("/Users/f00230z/Dropbox (Dartmouth College)/Bordeaux Archive/processed_ad.png")
 ```
 
 Using [spaCy](https://spacy.io/usage/training), an advanced natural language processing library, he modified code from its api to create a custom entity detector. He randomly generated a training set that included less than 5% of the dates from the dataset. For each date in the training set, he tagged words associated with theatrical categories such as venue, work, genre as well as artists and creators. In the figure below, we see the result of spaCy's predictive algorithm.<br>
@@ -41,7 +38,7 @@ Using [spaCy](https://spacy.io/usage/training), an advanced natural language pro
 Sanders finally ran spaCy's entity detector on the entire dataset and transferred the tagged entities into a dataframe.<br>
 
 ```{r out.width='50%', out.extra='style="float:right; padding:10px"'}
-knitr::include_graphics("../site/images/dataframe.png")
+knitr::include_graphics("/Users/f00230z/Dropbox (Dartmouth College)/Bordeaux Archive/dataframe.png")
 ```
 
 Given a number of inconsistencies, Sanders along with an undergraduate assistant, Madeleine Wallace, combed through the dataset. They implemented both manual and computational methods to standardize spellings, correct misidentified data, and fill in any missing information. The methods deployed included a feature extraction algorithm from scikit-learn called [TfidfVectorizer](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html) as well as the text correction site called [OpenRefine](https://openrefine.org/). Finally, Sanders associated the works, venues and artists with authorative records.<br>
@@ -55,7 +52,7 @@ Work (including order within performance)<br>
 Genre<br>
 Person (actors, composers, etc.)<br>
 
-Adams then designed a relational database that captured the shape of the dataset and its objects. Generating unique IDs for the above objects, Adams stored the data in tables as CSV files, with the future option of creating a remote database. Finally, to allow users to interact with the dataset, Adams created RMarkdown templates for each object (Venue, Performance, Work, Genre, Person), which then generated static HTML pages (e.g. each person gets a page from the “person” template, each work gets a page from the “work” template).<br>
+Adams then designed a relational database that captured the shape of the dataset and its objects. Generating unique IDs for the above objects, Adams stored the data in tables as CSV files, with the future option of creating a remote database. Finally, to allow users to interact with the dataset, Adams created RMarkdown templates for each object (Venue, Performance, Work, Genre, Person), which then generated static HTML pages (e.g. each person gets a page from the “person” template, each work gets a page from the “work” template). To see our workflow, please consult our [GitHub repository](https://github.com/jladams/french-atlantic-theater).<br>
 
 ## Future Plans
 
