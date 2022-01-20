@@ -4,6 +4,7 @@ output:
     self_contained: false
     lib_dir: "../site/venue/libs"
     includes:
+      in_header: "../site/head.html"
       before_body: "../site/navbar.html"
 params:
   venue: "Théâtre De Bordeaux"

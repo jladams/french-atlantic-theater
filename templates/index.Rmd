@@ -3,6 +3,7 @@ title: "Bordeaux's Theater Culture"
 output:
   html_document:
     includes:
+      in_header: "../site/head.html"
       before_body: "../site/navbar.html"
 ---
 

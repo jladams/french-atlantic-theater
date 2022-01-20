@@ -8,7 +8,9 @@ params:
 title: "Category: `r params$category`"
 output: 
   html_document:
+    self_contained: false
     includes:
+      in_header: "../site/head.html"
       before_body: "../site/navbar.html" 
 ---
 
