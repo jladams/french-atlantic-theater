@@ -7,6 +7,8 @@ ids <- list.files("site", pattern = "\\.html$", full.names = TRUE, recursive = T
 titles <- lapply(1:length(ids), function(i) {
   cat(paste0("Building index...", round(i / length(ids) * 100, 2), "%\r"))
   
+  id <- str_remove(ids[i], pattern = "site")
+  
   title <- read_html(ids[i]) %>%
     html_node("title") %>%
     html_text()
@@ -40,7 +42,7 @@ titles <- lapply(1:length(ids), function(i) {
   
   
   tmp <- tibble(
-    id = paste0("/", ids[i]),
+    id = id,
     type = type,
     title = title,
     title_ascii = title_ascii,
