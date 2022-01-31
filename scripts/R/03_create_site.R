@@ -1,6 +1,9 @@
+# Load Necessary Packages
 library(tidyverse)
 library(rmarkdown)
 
+
+# Read in Data
 documents <- read_csv("./data/processed/db_tables/document.csv")
 venues <- read_csv("./data/processed/db_tables/venue.csv")
 performances <- read_csv("./data/processed/db_tables/performance.csv", col_types = "cncccccccD")
@@ -8,14 +11,25 @@ works <- read_csv("./data/processed/db_tables/work.csv")
 genres <- read_csv("./data/processed/db_tables/genre.csv")
 persons <- read_csv("./data/processed/db_tables/person.csv")
 
+# Add prettier title to performances using date and venue names
 perf_venue <- performances %>%
   left_join(venues) %>%
   mutate(performance = paste0(format(date, "%A, %B %d, %Y"), " at ", str_to_title(venue)))
 
+# Write out the data we just created
 write_csv(perf_venue, "./data/processed/perf_venue.csv")
 
+# Creating pages ----------
+## Default / Home ----------
+rmarkdown::render(
+  input = "./templates/default.Rmd",
+  output_dir = "./site",
+  output_file = "default.html",
+  quiet = TRUE
+)
 
-# About --------
+
+## About --------
 rmarkdown::render(
   input = "./templates/about.Rmd",
   output_dir = "./site",
@@ -23,7 +37,8 @@ rmarkdown::render(
   quiet = TRUE
 )
 
-# Category Pages -----------
+## Category Pages -----------
+### Create metadata -----------
 category_df <- tibble(
   category = c("Documents", "Genres", "Performances", "Persons", "Venues", "Works"),
   cat_folder = c("document", "genre", "performance", "person", "venue", "work"),
@@ -32,6 +47,7 @@ category_df <- tibble(
   link_var = c("doc_id", "genre_id", "performance_id", "person_id", "venue_id", "work_id")
 )
 
+### Render Pages ----------
 lapply(1:nrow(category_df), function(i) {
   rmarkdown::render(
     input = "./templates/category.Rmd",
@@ -48,7 +64,7 @@ lapply(1:nrow(category_df), function(i) {
 })
 
 
-# Documents -------
+## Documents -------
 lapply(1:nrow(documents), function(i) {
   print(paste0("Document ", i))
   
@@ -69,7 +85,7 @@ lapply(1:nrow(documents), function(i) {
   )  
 }) 
 
-# Venues -------
+## Venues -------
 lapply(1:nrow(venues), function(i) {
   print(paste0("Venue ", i))
   venue <- str_to_title(venues$venue[i])
@@ -88,7 +104,7 @@ lapply(1:nrow(venues), function(i) {
 })
 
 
-# Performances -------
+## Performances -------
 lapply(1:nrow(perf_venue), function(i) {
   print(paste0("Performance ", i))
   performance <- perf_venue$performance[i]
@@ -107,7 +123,7 @@ lapply(1:nrow(perf_venue), function(i) {
 }) 
 
 
-# Works -------
+## Works -------
 lapply(1:nrow(works), function(i) {
   print(paste0("Work ", i))
   work <- works$work[i]
@@ -125,7 +141,7 @@ lapply(1:nrow(works), function(i) {
   )  
 }) 
 
-# Genres -------
+## Genres -------
 lapply(1:nrow(genres), function(i) {
   print(paste0("Genre ", i))
   genre <- genres$genre[i]
@@ -143,7 +159,7 @@ lapply(1:nrow(genres), function(i) {
   )
 })
 
-# Persons -------
+## Persons -------
 lapply(1:nrow(persons), function(i) {
   print(paste0("Person ", i))
   person <- persons$person[i]
