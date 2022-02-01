@@ -32,6 +32,8 @@ rmarkdown::render(
 default <- read_file("./site/default.html") %>%
   str_replace_all("\\.\\.\\/site\\/images", "\\/images")
 
+# Place one copy as "default" for Reclaim hosting purposes
+# Place one copy as "index" because everyone else expects that
 write_file(default, "./site/default.html")
 write_file(default, "./site/index.html")
 
