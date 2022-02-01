@@ -28,6 +28,12 @@ rmarkdown::render(
   quiet = TRUE
 )
 
+# Fix image links
+default <- read_file("./site/default.html") %>%
+  str_replace_all("\\.\\.\\/site\\/images", "\\/images")
+
+write_file(default, "./site/default.html")
+write_file(default, "./site/index.html")
 
 ## About --------
 rmarkdown::render(
@@ -36,6 +42,12 @@ rmarkdown::render(
   output_file = "about.html",
   quiet = TRUE
 )
+
+# Fix image links
+about <- read_file("./site/about.html") %>%
+  str_replace_all("\\.\\.\\/site\\/images", "\\/images")
+
+write_file(about, "./site/about.html")
 
 ## Category Pages -----------
 ### Create metadata -----------

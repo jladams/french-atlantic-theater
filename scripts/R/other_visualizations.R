@@ -78,6 +78,7 @@ ggplot(person_gg, aes(x = x, y = y, xend = xend, yend = yend)) +
   coord_equal() +
   theme_blank()
 
+ggsave("./other_output/images/person_network.png", dpi = 600, width = 8, height = 8)
 ggsave("./other_output/images/person_network.pdf", dpi = 600, width = 8, height = 8)
 
 top_5_genres <- performance_has_work %>%

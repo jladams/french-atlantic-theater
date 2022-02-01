@@ -3,7 +3,6 @@ title: "About Bordeaux's Theater Culture"
 output:
   html_document:
     self_contained: false
-    lib_dir: "../site/libs"
     includes:
       in_header: "../site/head_static.html"
       before_body: "../site/navbar.html"
@@ -26,14 +25,14 @@ The performances in this reconstructed repertoire appear in three newspapers: *J
 ## Workflow
 
 ```{r out.width='40%', out.extra='style="float:right; padding:10px"'}
-knitr::include_graphics("images/Spectacles.png")
+knitr::include_graphics("../images/Spectacles.png")
 ```
 
 This project follows the ethos of the [minimal computing](https://go-dh.github.io/mincomp/about/) movement in so far as three individuals, with limited outside resources, produced the dataset, database and resulting website. Here we provide a narrative of the project's genesis in the hope that it will serve as a roadmap for scholars to create their own projects.<br>
 
 To generate the raw data, Sanders extracted from a collection of over 3,000 newspapers theatrical information that appeared at the end of each issue, under the rubric *Spectacles*. He first scraped the OCR (optical character recognition) layer of the pdfs and collated them into a dataframe (i.e. spreadsheet). For each date, he  removed any text that was unrelated to performance. After the raw data was narrowed down to theatrical information, the next step proved the most difficult. He tried to find an approach that would organize unstructured data. Given that OCR packages such as tesseract unevenly render pre-19th century print into legible texts, he first experimented with processes that would improve the OCR; namely, the software packages [Pytesseract](https://pypi.org/project/pytesseract/), [Calamari](https://pypi.org/project/calamari-ocr/), [OCRopus](https://github.com/ocropus/ocropy), and [Google Cloud Vision](https://cloud.google.com/vision/docs/pdf). These attempts, however, led to middling results. His next experiment involved formatting changes. Since these advertisements italicize theatrical works, he  turned to [Google Doc's API](https://developers.google.com/docs/api/samples/output-json) to identify italicized words. While this approach worked, it led to an unwieldy amount of data manipulation. He finally decided on a Natural Language Processing approach that did not require any improvements to OCR.<br>
 ```{r out.width='70%', out.extra='style="float:left; padding:10px"'}
-knitr::include_graphics("images/processed_ad.png")
+knitr::include_graphics("../images/processed_ad.png")
 ```
 
 Using [spaCy](https://spacy.io/usage/training), an advanced natural language processing library, he modified code from its api to create a custom entity detector. He randomly generated a training set that included less than 5% of the dates from the dataset. For each date in the training set, he tagged words associated with theatrical categories such as venue, work, genre as well as artists and creators. In the figure below, we see the result of spaCy's predictive algorithm.<br>
@@ -41,7 +40,7 @@ Using [spaCy](https://spacy.io/usage/training), an advanced natural language pro
 Sanders finally ran spaCy's entity detector on the entire dataset and transferred the tagged entities into a dataframe.<br>
 
 ```{r out.width='50%', out.extra='style="float:right; padding:10px"'}
-knitr::include_graphics("images/dataframe.png")
+knitr::include_graphics("../images/dataframe.png")
 ```
 
 Given a number of inconsistencies, Sanders along with an undergraduate assistant, Madeleine Wallace, combed through the dataset. They implemented both manual and computational methods to standardize spellings, correct misidentified data, and fill in any missing information. The methods deployed included a feature extraction algorithm from scikit-learn called [TfidfVectorizer](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html) as well as the text correction site called [OpenRefine](https://openrefine.org/). Finally, Sanders associated the works, venues and artists with authorative records.<br>

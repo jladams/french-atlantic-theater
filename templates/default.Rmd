@@ -2,8 +2,9 @@
 title: "Bordeaux's Theater Culture"
 output:
   html_document:
+    self_contained: false
     includes:
-      in_header: "../site/head.html"
+      in_header: "../site/head_static.html"
       before_body: "../site/navbar.html"
 ---
 
@@ -18,44 +19,44 @@ knitr::opts_chunk$set(echo = FALSE)
 Bordeaux's theater culture is of interest because it can reveal insights into the  influences of colonial commerce as well as revolutionary politics. Theater in Bordeaux was first and foremost a commercial enterprise, one that received financial support from shareholders. Indeed, some of the theater's financial backers were directly involved in colonial commerce. From this dataset, we indirectly discover colonial ties through its repertoire.<br>
 
 ```{r out.width='100%', out.extra='style="float:left; padding:10px"'}
-knitr::include_graphics("/Users/f00230z/Downloads/heroes.png")
+knitr::include_graphics("../images/heroes.png")
 ```
 
 From 1784 till 1793, the most widely performed works were the pantomime [*L’Héroïne Américaine*](http://frenchatlantictheater.host.dartmouth.edu/work/611.html) performed over 100 times and the drame bourgeois [*Le Héros Américain*](http://frenchatlantictheater.host.dartmouth.edu/work/974.html) staged over 50 times. What emerges from the above examples is a repertoire that focuses either on the Creole experience, meaning French colonists living in the Antilles, or the conflict between Native American islanders and Spanish or British colonists.<br>
 
 ```{r out.width='50%', out.extra='style="float:right; padding:10px"'}
-knitr::include_graphics("/Users/f00230z/Downloads/ballet des negres.png")
+knitr::include_graphics("../images/ballet des negres.png")
 ```
 By 1792, however, Bordeaux’s theaters began to perform Rudolphe Kreutzer and Etienne Favières’ adaptation of [*Paul et Virginie*](http://frenchatlantictheater.host.dartmouth.edu/work/1277.html). This opera represents the most direct critique of France’s colonial enterprise. Performed first at the smaller Théâtre Italien, then at the Grand Théâtre de la Nation and finally at the more revolutionary-minded Théâtre de la République, theatrical troupes staged this opera from 1792 to 1793, the pivotal moment when news of the Haitian Revolution appeared in newspapers.<br>
 
 ### Revolutionary Politics
 
-In addition to colonial interests, Bordeaux was also the center of political power for the moderate Revolutionary party, the Girondins. Certain pages in this dataset reveal the political transformation that the French Revolution unleashed. For instance, we discover in the performances of Beaumarchais' [*Le Mariage de Figaro*](http://frenchatlantictheater.host.dartmouth.edu/work/823.html) a transition in political control, from a pre-Revolutionary period of censorship to a post-Revolutionary period of artistic freedom.  We also catch glimpses of tensions between the moderate Girondin and progressive Jacobin parties. On the one hand, the Revolutionary plays - [*Brutus*](http://frenchatlantictheater.host.dartmouth.edu/work/1044.html), [*La Mort de César*](http://frenchatlantictheater.host.dartmouth.edu/work/659.html) and [*Guillaume Tell*](http://frenchatlantictheater.host.dartmouth.edu/work/663.html) - become more popular after 1789.<br>
+In addition to colonial interests, Bordeaux was also the center of political power for the moderate Revolutionary party, the Girondins. Certain pages in this dataset reveal the political transformation that the French Revolution unleashed. For instance, we discover in the performances of Beaumarchais' [*Le Mariage de Figaro*](http://frenchatlantictheater.host.dartmouth.edu/work/823.html) a transition in political control, from a pre-Revolutionary period of censorship to a post-Revolutionary period of artistic freedom.  We also catch glimpses of tensions between the moderate Girondin and progressive Jacobin parties. On the one hand, plays celebrated by the Jacobins - [*Brutus*](http://frenchatlantictheater.host.dartmouth.edu/work/1044.html), [*La Mort de César*](http://frenchatlantictheater.host.dartmouth.edu/work/659.html) and [*Guillaume Tell*](http://frenchatlantictheater.host.dartmouth.edu/work/663.html) - become more popular after 1789.<br>
 
 ```{r out.width='100%', out.extra='style="float:left; padding:10px"'}
-knitr::include_graphics("/Users/f00230z/Downloads/opera.png")
+knitr::include_graphics("../images/opera.png")
 ```
 
-On the other, the counter-Revolutionary play [*L'Ami des lois*](http://frenchatlantictheater.host.dartmouth.edu/work/1462.html) also garnered attention. Its performance even lead to the incarceration of actors who performed it at the [*Grand-Théâtre*](http://frenchatlantictheater.host.dartmouth.edu/venue/1.html). By examining the venues where plays were performed, we can possibly discover the political orientation of theatrical troupes. We might also see in abrupt transitions in repertoire the political influence of Revolutionary administrators. This dataset, unfortunately, does not extend into the transition of power from the moderate Girondin politicians from Bordeaux to the progressive, and militant Jacobin Military commission from Paris.<br>
+On the other, [*L'Ami des lois*](http://frenchatlantictheater.host.dartmouth.edu/work/1462.html), a Revolutionary play sympathetic to a Girondin perspective, also garnered attention. Its performance even lead to the incarceration of actors who performed it at the [*Grand-Théâtre*](http://frenchatlantictheater.host.dartmouth.edu/venue/1.html). By examining the venues where plays were performed, we can possibly discover the political orientation of theatrical troupes. We might also see in abrupt transitions in repertoire the political influence of Revolutionary administrators. This dataset, unfortunately, does not extend into the transition of power from the moderate Girondin politicians from Bordeaux to the progressive, and militant Jacobin Military commission from Paris.<br>
 
 ### Genres
 
 A brief scan of this dataset reveals the appeal of lighter genres such as comedies, operas and opéra-comique. The graph below illustrates a repertoire dominated by well-known comedies with a healthy interest in new works. The year of the Revolution, 1789, also stands out as a moment when Bordeaux's government allowed more theater troupes to enter the entertainment market.<br>
 
 ```{r out.width='100%', out.extra='style="float:right; padding:10px"'}
-knitr::include_graphics("/Users/f00230z/Downloads/genres_over_time.png")
+knitr::include_graphics("../images/genres_over_time.png")
 ```
 
 ### Performers and Creators
 
 By looking at the artists in this dataset, we discover a major difference that separates written works, such as plays and operas, from choreographed pieces; namely, ballets and pantomimes.<br>
 ```{r out.width='100%', out.extra='style="float:left; padding:10px"'}
-knitr::include_graphics("/Users/f00230z/Downloads/person_timeline.png")
+knitr::include_graphics("../images/person_timeline.png")
 ```
 
 Whereas there are only a few choreographers in this dataset, we encounter a multitude of playwrights, librettists and composers. In this regard, ballets were often locally created, and with the exception of a few examples, most written works came from Parisian writers. In addition to this insight, the timeline also highlights a common feature of provincial theaters: famous actors would tour France and perform briefly at provincial theaters.<br>
 
 Finally, by mapping out networks across performances, we discover individuals who are central to a troupe's creative activity such as the ballet master [Dauberval](http://frenchatlantictheater.host.dartmouth.edu/person/46.html). We also find islands that exist outside of theatrical networks such as the animals in [M. Nicolet's menagerie](http://frenchatlantictheater.host.dartmouth.edu/venue/17.html).
 ```{r out.width='150%'}
-knitr::include_graphics("/Users/f00230z/Downloads/person_network.png")
+knitr::include_graphics("../images/person_network.png")
 ```
