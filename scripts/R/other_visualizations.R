@@ -51,6 +51,8 @@ ggplot(person_timeline, aes(y = 0, color = role)) +
   facet_wrap(~role)
 
 ggsave("./other_output/images/person_timeline.png", width = 6, height = 3, dpi = 600)
+ggsave("./images/person_timeline.png", width = 6, height = 3, dpi = 600)
+ggsave("./site/images/person_timeline.png", width = 6, height = 3, dpi = 600)
 
 person_network <- person_has_performance %>%
   distinct(performance_id, person_id) %>%
@@ -78,8 +80,10 @@ ggplot(person_gg, aes(x = x, y = y, xend = xend, yend = yend)) +
   coord_equal() +
   theme_blank()
 
-ggsave("./other_output/images/person_network.png", dpi = 600, width = 8, height = 8)
 ggsave("./other_output/images/person_network.pdf", dpi = 600, width = 8, height = 8)
+ggsave("./other_output/images/person_network.png", dpi = 600, width = 8, height = 8)
+ggsave("./site/images/person_network.png", dpi = 600, width = 8, height = 8)
+ggsave("./images/person_network.png", dpi = 600, width = 8, height = 8)
 
 top_5_genres <- performance_has_work %>%
   left_join(performances) %>%
@@ -115,6 +119,8 @@ ggplot(genres_over_time, aes(x = date, y = n)) +
   )
 
 ggsave("./other_output/images/genres_over_time.png", width = 5, height = 3, dpi = 300)
+ggsave("./site/images/genres_over_time.png", width = 5, height = 3, dpi = 300)
+ggsave("./images/genres_over_time.png", width = 5, height = 3, dpi = 300)
 
 
 
@@ -147,6 +153,8 @@ ggplot(yearly_heroes, aes(x = year, y = n, color = work)) +
   )
 
 ggsave("./other_output/images/heroes.png", width = 6, height = 3)
+ggsave("./site/images/heroes.png", width = 6, height = 3)
+ggsave("./images/heroes.png", width = 6, height = 3)
 
 
 
@@ -177,5 +185,7 @@ ggplot(yearly_opera, aes(x = year, y = n, color = work)) +
   )
 
 ggsave("./other_output/images/opera.png", width = 6, height = 3)
+ggsave("./site/images/opera.png", width = 6, height = 3)
+ggsave("./images/opera.png", width = 6, height = 3)
 
 
