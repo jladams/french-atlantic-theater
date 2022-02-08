@@ -216,11 +216,156 @@ person_performance_tags <- c(
   "PYROTECHNIC ENGINEER"
 )
 
-# Create persons Table
-persons <- df %>%
+# Retrieve list of files in "standardizing" that contain person_performance_tags or person_work_tags in their names
+s_files <- list.files("./data/original/standardizing", pattern = "*.csv", full.names = TRUE) %>%
+  as_tibble_col(column_name = "files") %>%
+  filter(
+    str_detect(
+      files, 
+      pattern = str_c(c(person_performance_tags, person_work_tags), collapse = "|")
+    )
+  )
+
+# Read in each of the "standardized" files and combine them
+person_standard <- lapply(1:length(s_files$files), function(i) {
+  
+  tmp <- read_csv(s_files$files[i], col_types = cols(.default = "c"))
+  
+  return(tmp)
+}) %>%
+  bind_rows() %>%
+  # Keep only these columns
+  select(
+    Word,
+    ISNI,
+    VIAF,
+    WIKI,
+    CESAR,
+    OCLC,
+    Name,
+    Record_Link,
+    ISNI_2,
+    VIAF_2,
+    WIKI_2,
+    CESAR_2,
+    Name_2
+  ) %>%
+  # Remove duplicate rows
+  distinct()
+
+# Create a data frame for any instances of a second person
+# The second person gets the same column structure as the first so we can combine them
+second_person <- person_standard %>%
+  select(
+    Word,
+    ISNI = ISNI_2,
+    VIAF = VIAF_2,
+    WIKI = WIKI_2,
+    CESAR = CESAR_2,
+    Name = Name_2
+  ) %>%
+  distinct() %>%
+  # Filter out any blanks
+  filter(
+    if_any(ISNI:Name, ~ !is.na(.x))
+  )
+
+# Recombine into a single data frame
+both_persons <- person_standard %>%
+  select(
+    Word,
+    ISNI,
+    VIAF,
+    WIKI,
+    CESAR,
+    Name
+  ) %>%
+  bind_rows(second_person) %>%
+  distinct()
+
+# Create a data frame of people who have any identifier
+with_id <- both_persons %>%
+  # This removes any rows which are entirely NA for identifiers (ISNI:Name)
+  filter(
+    if_any(ISNI:Name, ~ !is.na(.x))
+  ) %>%
+  # Each distinct combination of these variables gets assigned as a standardized "person" with a "person_id"
+  group_by(ISNI, VIAF, WIKI, CESAR, Name) %>%
+  # If there is no name given, just use the first alias ("Word") that appears
+  mutate(
+    person_id = cur_group_id(),
+    Name = ifelse(is.na(Name), first(Word), Name)
+  )
+
+# Figure out what the highest person_id that has been created so far
+highest_id <- max(with_id$person_id)
+
+# Create a dataset of people without IDs
+without_id <- both_persons %>%
+  filter(
+    if_all(ISNI:Name, ~ is.na(.x))
+  ) %>%
+  distinct() %>%
+  # Add a "Name" column for compatibility with the with_id data frame
+  mutate(Name = Word) %>%
+  group_by(Word) %>%
+  # Add new id number to the highest id from the other data set to make sure they don't overlap
+  mutate(person_id = cur_group_id() + highest_id)
+
+# Create aliases table using the distinct names from df
+aliases <- df %>%
   filter(Tag %in% c(person_performance_tags, person_work_tags)) %>%
-  distinct(person = Word) %>%
-  mutate(person_id = row_number())
+  distinct(alias = Word) %>%
+  mutate(alias_id = row_number())
+
+# Combine the with_id and without_id tables
+person_with_alias <- bind_rows(with_id, without_id) %>%
+  rename(
+    alias = Word,
+    person = Name
+  ) %>%
+  arrange(person_id) %>%
+  # Add the standardized persons to the "aliases" table
+  right_join(
+    aliases, by = "alias"
+  )
+
+# Fix missing values in person_id
+# (This happens if the person is missing from the standardizing files)
+pwa_highest <- max(person_with_alias$person_id, na.rm = TRUE)
+
+# Add person_ids to rows with none
+pwa_nas <- person_with_alias %>%
+  ungroup() %>%
+  filter(is.na(person_id)) %>%
+  mutate(person_id = row_number() + pwa_highest)
+
+# Remove rows with NA for person_id, add on the corrected data
+person_with_alias_fixed <- person_with_alias %>%
+  ungroup() %>%
+  filter(!is.na(person_id)) %>%
+  bind_rows(pwa_nas)
+
+# Create persons table
+persons <- person_with_alias_fixed %>%
+  ungroup() %>%
+  select(
+    person_id,
+    person,
+    ISNI, 
+    VIAF,
+    WIKI,
+    CESAR
+  ) %>%
+  distinct()
+
+# Create linkage table between persons and aliases
+person_has_alias <- person_with_alias_fixed %>%
+  ungroup() %>%
+  distinct(
+    alias_id,
+    person_id
+  )
 
 # Determine somebody's character/role if they have a person performance tag
 actor_roles <- df %>%
@@ -234,7 +379,7 @@ actor_roles <- df %>%
   filter(Tag %in% c(person_performance_tags, "ROLE")) %>%
   distinct(performance_id,
            work_meta_id,
-           person = Word,
+           alias = Word,
            role = Tag)
 
 roles <- character()
@@ -244,7 +389,7 @@ for(i in 1:nrow(actor_roles)) {
   role <- NA
   if(i < nrow(actor_roles)) {
     if(actor_roles$role[i + 1] == "ROLE" & actor_roles$performance_id[i + 1] == actor_roles$performance_id[i]) {
-      role <- actor_roles$person[i + 1]
+      role <- actor_roles$alias[i + 1]
     }    
   }
   
@@ -254,12 +399,14 @@ for(i in 1:nrow(actor_roles)) {
 # Attach roles vector as "char_role" to identify characters played by each person
 actor_roles$char_role <- roles
 
-# Remove ROLE tag and collect person ids by joining to persons table
+# Remove ROLE tag and collect alias and person ids by joining to relevant tables
 actor_roles <- actor_roles %>%
   filter(role != "ROLE") %>%
-  left_join(persons, by = "person") %>%
+  left_join(aliases, by = "alias") %>%
+  left_join(person_has_alias, by = "alias_id") %>%
   select(performance_id,
          person_id,
+         alias_id,
          work_meta_id,
          char_role)
 
@@ -288,10 +435,12 @@ person_has_performance <- df %>%
   filter(Tag %in% c(person_performance_tags, person_work_tags)) %>%
   distinct(performance_id,
            work_meta_id,
-           person = Word,
+           alias = Word,
            role = Tag) %>%
-  left_join(persons, by = "person") %>%
+  left_join(aliases, by = "alias") %>%
+  left_join(person_has_alias, by = "alias_id") %>%
   select(performance_id,
+         alias_id,
          person_id,
          work_meta_id,
          role) %>%
@@ -299,6 +448,7 @@ person_has_performance <- df %>%
   left_join(tmp_works_crosswalk) %>%
   distinct(performance_id, 
            work_id, 
+           alias_id,
            person_id, 
            role, 
            char_role)
@@ -316,12 +466,14 @@ work_has_person <- df %>%
   select(-work_id.x) %>%
   rename(work_id = work_id.y) %>%
   filter(Tag != "WORK") %>%
-  left_join(persons, by = c("Word" = "person")) %>%
+  left_join(aliases, by = c("Word" = "alias")) %>%
+  left_join(person_has_alias, by = "alias_id") %>%
   distinct(work_id,
+           alias_id,
            person_id,
            role = Tag) %>%
   drop_na() %>%
-  arrange(work_id, person_id)
+  arrange(work_id, alias_id, person_id)
 
 # Write all data to local tables
 write_csv(documents, "./data/processed/db_tables/document.csv")
@@ -330,9 +482,11 @@ write_csv(performances, "./data/processed/db_tables/performance.csv")
 write_csv(works, "./data/processed/db_tables/work.csv")
 write_csv(genres, "./data/processed/db_tables/genre.csv")
 write_csv(persons, "./data/processed/db_tables/person.csv")
+write_csv(aliases, "./data/processed/db_tables/alias.csv")
 write_csv(document_has_venue, "./data/processed/db_tables/document_has_venue.csv")
 write_csv(document_has_performance, "./data/processed/db_tables/document_has_performance.csv")
 write_csv(performance_has_work, "./data/processed/db_tables/performance_has_work.csv")
+write_csv(person_has_alias, "./data/processed/db_tables/person_has_alias.csv")
 write_csv(person_has_performance, "./data/processed/db_tables/person_has_performance.csv")
 write_csv(work_has_person, "./data/processed/db_tables/work_has_person.csv")
 write_csv(work_has_genre, "./data/processed/db_tables/work_has_genre.csv")
@@ -348,10 +502,12 @@ if(remote_db) {
   dbWriteTable(con, "work", works, overwrite = TRUE)
   dbWriteTable(con, "genre", genres, overwrite = TRUE)
   dbWriteTable(con, "person", persons, overwrite = TRUE)
+  dbWriteTable(con, "alias", aliases, overwrite = TRUE)
   dbWriteTable(con, "document_has_venue", document_has_venue, overwrite = TRUE)
   dbWriteTable(con, "document_has_performance", document_has_performance, overwrite = TRUE)
   dbWriteTable(con, "performance_has_work", performance_has_work, overwrite = TRUE)
   dbWriteTable(con, "person_has_performance", person_has_performance, overwrite = TRUE)
+  dbWriteTable(con, "person_has_alias", person_has_alias, overwrite = TRUE)
   dbWriteTable(con, "work_has_person", work_has_person, overwrite = TRUE)
   dbWriteTable(con, "work_has_genre", work_has_genre, overwrite = TRUE)
   
