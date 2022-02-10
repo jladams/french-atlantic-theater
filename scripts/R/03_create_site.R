@@ -6,7 +6,7 @@ library(rmarkdown)
 # Read in Data
 documents <- read_csv("./data/processed/db_tables/document.csv")
 venues <- read_csv("./data/processed/db_tables/venue.csv")
-performances <- read_csv("./data/processed/db_tables/performance.csv", col_types = "cncccccccD")
+performances <- read_csv("./data/processed/db_tables/performance.csv", col_types = "cnDccccccc")
 works <- read_csv("./data/processed/db_tables/work.csv")
 genres <- read_csv("./data/processed/db_tables/genre.csv")
 persons <- read_csv("./data/processed/db_tables/person.csv")
@@ -82,14 +82,10 @@ invisible( # Using "invisible" to keep the console output cleaner
       quiet = TRUE
     )
     
-    # Puts a little space after the progress meter
-    if(i == nrow(category_df)) {
-      cat("\n\n")
-    }
-    
   })
 )
 
+cat("\n")
 
 ## Documents -------
 invisible(
@@ -112,12 +108,10 @@ invisible(
       quiet = TRUE
     )  
     
-    if(i == nrow(documents)) {
-      cat("\n\n")
-    }
-    
   }) 
 )
+
+cat("\n")
 
 ## Venues -------
 invisible(
@@ -137,13 +131,10 @@ invisible(
       quiet = TRUE
     )
     
-    if(i == nrow(venues)) {
-      cat("\n\n")
-    }
-    
   })
 )
 
+cat("\n")
 
 ## Performances -------
 invisible(
@@ -162,12 +153,10 @@ invisible(
       ), 
       quiet = TRUE
     )  
-    
-    if(i == nrow(perf_venue)) {
-      cat("\n\n")
-    }
   }) 
 )
+
+cat("\n")
 
 ## Works -------
 invisible(
@@ -187,12 +176,10 @@ invisible(
       quiet = TRUE
     )  
     
-    if(i == nrow(works)) {
-      cat("\n\n")
-    }
-    
   }) 
 )
+
+cat("\n")
 
 ## Genres -------
 invisible(
@@ -212,11 +199,10 @@ invisible(
       quiet = TRUE
     )
     
-    if(i == nrow(genres)) {
-      cat("\n\n")
-    }
   })
 )
+
+cat("\n")
 
 ## Persons -------
 invisible(
@@ -236,8 +222,5 @@ invisible(
       quiet = TRUE
     )
     
-    if(i == nrow(persons)) {
-      cat("\n\n")
-    }
   })
 )
