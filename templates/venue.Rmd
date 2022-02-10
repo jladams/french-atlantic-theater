@@ -21,14 +21,18 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FA
 
 documents <- read_csv("../data/processed/db_tables/document.csv")
 venues <- read_csv("../data/processed/db_tables/venue.csv")
-performances <- read_csv("../data/processed/db_tables/performance.csv", col_types = "cncccccccD")
-works <- read_csv("../data/processed/db_tables/work.csv")
+performances <- read_csv("../data/processed/db_tables/performance.csv", col_types = "cnDccccccc")
+works <- read_csv("../data/processed/db_tables/work.csv", col_types = "ncccccc")
+titles <- read_csv("../data/processed/db_tables/title.csv")
 genres <- read_csv("../data/processed/db_tables/genre.csv")
 persons <- read_csv("../data/processed/db_tables/person.csv")
+aliases <- read_csv("../data/processed/db_tables/alias.csv")
 document_has_venue <- read_csv("../data/processed/db_tables/document_has_venue.csv")
 document_has_performance <- read_csv("../data/processed/db_tables/document_has_performance.csv")
 performance_has_work <- read_csv("../data/processed/db_tables/performance_has_work.csv")
+person_has_alias <- read_csv("../data/processed/db_tables/person_has_alias.csv")
 person_has_performance <- read_csv("../data/processed/db_tables/person_has_performance.csv")
+work_has_title <- read_csv("../data/processed/db_tables/work_has_title.csv")
 work_has_person <- read_csv("../data/processed/db_tables/work_has_person.csv")
 work_has_genre <- read_csv("../data/processed/db_tables/work_has_genre.csv")
 
@@ -36,32 +40,32 @@ work_has_genre <- read_csv("../data/processed/db_tables/work_has_genre.csv")
 
 # Location
 The location for this venue has been given as:
-```{r}
+```{r results='asis'}
 locations <- venues %>%
   filter(venue_id == params$venue_id) %>%
   drop_na()
 
 if(nrow(locations) > 0) {
-  venues %>%
-    filter(venue_id == params$venue_id) %>%
-    separate_rows(location, sep = ";") %>%
-    select(Location = location) %>%
-    datatable()  
+  for(i in 1:nrow(locations)) {
+    cat(paste0("- ", locations$location[i]), sep = "\n")  
+  }
 } else {
-  cat("None provided")
+  cat(" --- ")
 }
 
 ```
 
 # Documents
+This venue appears in the following documents:
+
 ```{r}
 docs <- venues %>%
   filter(venue_id == params$venue_id) %>%
-  left_join(document_has_venue) %>%
-  left_join(documents) %>%
+  left_join(document_has_venue, by = "venue_id") %>%
+  left_join(documents, by = "doc_id") %>%
   mutate(
     Date = date,
-    Document = ifelse(!is.na(title), paste0("<a href='../document/", doc_id, ".html'>", title, "</a>"), ""),
+    Document = ifelse(!is.na(journal_title), paste0("<a href='../document/", doc_id, ".html'>", journal_title, "</a>"), ""),
     `Original Document` = ifelse(!is.na(links), paste0("<a href='", links, "'>Original Document</a>"), "")
   ) %>%
   select(
@@ -77,13 +81,16 @@ datatable(docs, escape = FALSE)
 ```{r}
 perf <- venues %>%
   filter(venue_id == params$venue_id) %>%
-  left_join(performances) %>%
+  left_join(performances, by = "venue_id") %>%
   mutate(Date = floor_date(date, "months")) %>%
   group_by(Date) %>%
-  tally()
+  tally() %>%
+  rename(Month = Date, Performances = n)
 
 if(nrow(perf) > 1) {
-  ggplot(perf, aes(x = Date, y = n)) +
+  datatable(perf)
+  
+  ggplot(perf, aes(x = Month, y = Performances)) +
   geom_line() +
   geom_point() +
   theme_minimal() +

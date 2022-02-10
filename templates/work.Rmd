@@ -23,27 +23,56 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FA
 
 documents <- read_csv("../data/processed/db_tables/document.csv")
 venues <- read_csv("../data/processed/db_tables/venue.csv")
-performances <- read_csv("../data/processed/db_tables/performance.csv", col_types = "cncccccccD")
-works <- read_csv("../data/processed/db_tables/work.csv")
+performances <- read_csv("../data/processed/db_tables/performance.csv", col_types = "cnDccccccc")
+works <- read_csv("../data/processed/db_tables/work.csv", col_types = "ncccccc")
+titles <- read_csv("../data/processed/db_tables/title.csv")
 genres <- read_csv("../data/processed/db_tables/genre.csv")
 persons <- read_csv("../data/processed/db_tables/person.csv")
+aliases <- read_csv("../data/processed/db_tables/alias.csv")
 document_has_venue <- read_csv("../data/processed/db_tables/document_has_venue.csv")
 document_has_performance <- read_csv("../data/processed/db_tables/document_has_performance.csv")
 performance_has_work <- read_csv("../data/processed/db_tables/performance_has_work.csv")
+person_has_alias <- read_csv("../data/processed/db_tables/person_has_alias.csv")
 person_has_performance <- read_csv("../data/processed/db_tables/person_has_performance.csv")
+work_has_title <- read_csv("../data/processed/db_tables/work_has_title.csv")
 work_has_person <- read_csv("../data/processed/db_tables/work_has_person.csv")
 work_has_genre <- read_csv("../data/processed/db_tables/work_has_genre.csv")
 
 ```
 
+# Official Records
+This work has the following associated authority records:
+
+```{r results='asis'}
+ids <- works %>%
+  filter(work_id == params$work_id) %>%
+  distinct(work_id, ISNI, VIAF, OCLC, WIKI, Google_Books) %>%
+  pivot_longer(-work_id, names_to = "source", values_to = "id") %>%
+  mutate(print_id = paste0(source, ": ", id)) %>%
+  filter(!is.na(id)) %>%
+  arrange(source)
+
+if(nrow(ids) > 0) {
+  for(i in 1:nrow(ids)) {
+    cat(paste0("- ", ids$print_id[i]), sep = "\n")  
+  }
+} else {
+  cat(" --- ")
+}
+```
+
+
+
 # People
+The following people are associated with this work:
+
 ```{r}
 works %>%
   filter(work_id == params$work_id) %>%
-  left_join(work_has_person) %>%
-  left_join(persons) %>%
-  left_join(person_has_performance) %>%
-  left_join(performances) %>%
+  left_join(work_has_person, by = "work_id") %>%
+  left_join(persons, by = "person_id") %>%
+  left_join(person_has_performance, by = c("work_id", "title_id", "alias_id", "person_id", "role")) %>%
+  left_join(performances, by = "performance_id") %>%
   mutate(
     person_link = ifelse(!is.na(person_id), paste0("<a href='../person/", person_id, ".html'>", person, "</a>"), ""),
     perf_link = ifelse(!is.na(performance_id), paste0("<a href='../performance/", performance_id, ".html'>Performance</a>"), ""),
@@ -58,12 +87,42 @@ works %>%
   datatable(escape = FALSE)
 ```
 
+
+# Performances and Titles:
+This work is associated with these performances, and advertised using these titles:
+
+```{r}
+perf_titles <- works %>%
+  filter(work_id == params$work_id) %>%
+  left_join(performance_has_work, by = "work_id") %>%
+  left_join(performances, by = "performance_id") %>%
+  left_join(titles, by = "title_id") %>%
+  left_join(venues, by = "venue_id") %>%
+  mutate(
+    perf_link = ifelse(!is.na(performance_id), paste0("<a href='../performance/", performance_id, ".html'>Performance</a>"), ""),
+    venue_link = ifelse(!is.na(venue_id), paste0("<a href='../performance/", venue_id, ".html'>", venue, "</a>"), "")
+  ) %>%
+  select(
+    Date = date,
+    `Work Advertised as` = title,
+    Venue = venue_link,
+    `Link to Performance` = perf_link
+  ) %>%
+  arrange(Date)
+
+if(nrow(perf_titles) > 0) {
+  datatable(perf_titles, escape = FALSE)
+}
+
+```
+
+
 # Performances Over Time
 ```{r}
 annual_perf <- works %>%
   filter(work_id == params$work_id) %>%
-  left_join(performance_has_work) %>%
-  left_join(performances) %>%
+  left_join(performance_has_work, by = "work_id") %>%
+  left_join(performances, by = "performance_id") %>%
   distinct(date, performance_id) %>%
   mutate(date = floor_date(date, "years")) %>%
   group_by(date) %>%
@@ -78,8 +137,8 @@ annual_perf <- works %>%
 
 perf <- works %>%
   filter(work_id == params$work_id) %>%
-  left_join(performance_has_work) %>%
-  left_join(performances) %>%
+  left_join(performance_has_work, by = "work_id") %>%
+  left_join(performances, by = "performance_id") %>%
   distinct(date, performance_id) %>%
   mutate(date = floor_date(date, "months")) %>%
   group_by(date) %>%
@@ -125,9 +184,10 @@ if(nrow(annual_perf) > 1) {
 ```{r}
 genre <- works %>%
   filter(work_id == params$work_id) %>%
-  left_join(work_has_genre) %>%
-  left_join(genres) %>%
-  filter(!is.na(genre))
+  left_join(work_has_genre, by = "work_id") %>%
+  left_join(genres, by = "genre_id") %>%
+  filter(!is.na(genre)) %>%
+  distinct(genre_id, genre)
 ```
 
 ```{r results='asis'}
@@ -136,5 +196,4 @@ if(nrow(genre) > 0) {
     cat(paste0("- [", genre$genre[i], "](../genre/", genre$genre_id[i], ".html)"), sep = "\n")  
   }
 }
-
 ```

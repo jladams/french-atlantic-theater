@@ -53,8 +53,11 @@ documents <- df %>%
   full_join(doc_meta, by = "doc_id") %>%
   # Lower-case all column names
   rename_with(str_to_lower) %>%
+  rename(
+    journal_title = title 
+  ) %>%
   # Add new document title
-  mutate(doc_title = paste0(title, " - ", format(date, "%A, %B %d, %Y")))
+  mutate(doc_title = paste0(journal_title, " - ", format(date, "%A, %B %d, %Y")))
 
 # Venues -----------
 ## Locations ------------

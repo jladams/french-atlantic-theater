@@ -23,14 +23,18 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FA
 
 documents <- read_csv("../data/processed/db_tables/document.csv")
 venues <- read_csv("../data/processed/db_tables/venue.csv")
-performances <- read_csv("../data/processed/db_tables/performance.csv", col_types = "cncccccccD")
-works <- read_csv("../data/processed/db_tables/work.csv")
+performances <- read_csv("../data/processed/db_tables/performance.csv", col_types = "cnDccccccc")
+works <- read_csv("../data/processed/db_tables/work.csv", col_types = "ncccccc")
+titles <- read_csv("../data/processed/db_tables/title.csv")
 genres <- read_csv("../data/processed/db_tables/genre.csv")
 persons <- read_csv("../data/processed/db_tables/person.csv")
+aliases <- read_csv("../data/processed/db_tables/alias.csv")
 document_has_venue <- read_csv("../data/processed/db_tables/document_has_venue.csv")
 document_has_performance <- read_csv("../data/processed/db_tables/document_has_performance.csv")
 performance_has_work <- read_csv("../data/processed/db_tables/performance_has_work.csv")
+person_has_alias <- read_csv("../data/processed/db_tables/person_has_alias.csv")
 person_has_performance <- read_csv("../data/processed/db_tables/person_has_performance.csv")
+work_has_title <- read_csv("../data/processed/db_tables/work_has_title.csv")
 work_has_person <- read_csv("../data/processed/db_tables/work_has_person.csv")
 work_has_genre <- read_csv("../data/processed/db_tables/work_has_genre.csv")
 
@@ -39,9 +43,9 @@ work_has_genre <- read_csv("../data/processed/db_tables/work_has_genre.csv")
 ```{r}
 perf_info <- performances %>%
   filter(performance_id == params$performance_id) %>%
-  left_join(venues) %>%
+  left_join(venues, by = "venue_id") %>%
   mutate(venue = str_to_title(venue)) %>%
-  left_join(document_has_performance)
+  left_join(document_has_performance, by = "performance_id")
 ```
 
 ## Document
@@ -50,10 +54,12 @@ Information for the document with this performance is [here](`r paste0("../docum
 ## Works and Performers
 ```{r}
 perf_people <- perf_info %>%
-  left_join(performance_has_work) %>%
-  left_join(person_has_performance) %>%
-  left_join(works) %>%
-  left_join(persons) %>%
+  left_join(performance_has_work, by = "performance_id") %>%
+  left_join(person_has_performance, by = c("performance_id", "work_id", "title_id")) %>%
+  left_join(works, by = "work_id") %>%
+  left_join(titles, by = "title_id") %>%
+  left_join(persons, by = "person_id") %>%
+  left_join(aliases, by = "alias_id") %>%
   mutate(
     role = str_to_title(role),
     venue_link = paste0("<a href='../venue/", venue_id, ".html'>", str_to_title(venue), "</a>"),
@@ -68,14 +74,18 @@ perf_people <- perf_info %>%
 perf_people %>%
   mutate(
     work_link = ifelse(is.na(work_id), " --- ", work_link),
+    title = ifelse(is.na(title), " --- ", title),
     person_link = ifelse(is.na(person_id), " --- ", person_link),
+    alias = ifelse(is.na(alias), " --- ", alias),
     role = ifelse(is.na(role), " --- ", role),
     char_role = ifelse(is.na(char_role), " --- ", char_role)
   ) %>%
   select(
     Venue = venue_link,
     Work = work_link,
+    `Work Advertised as` = title,
     Person = person_link,
+    `Credited as` = alias,
     Role = role,
     Character = char_role
   ) %>%
@@ -89,10 +99,10 @@ perf_people %>%
 ## Genres
 ```{r}
 perf_genre <- perf_info %>%
-  left_join(performance_has_work) %>%
-  left_join(works) %>%
-  left_join(work_has_genre) %>%
-  left_join(genres) %>%
+  left_join(performance_has_work, by = "performance_id") %>%
+  left_join(works, by = "work_id") %>%
+  left_join(work_has_genre, by = c("work_id", "title_id")) %>%
+  left_join(genres, by = "genre_id") %>%
   arrange(order, work, genre) %>%
   mutate(
     work_link = paste0("<a href='../work/", work_id, ".html'>", str_to_title(work), "</a>"),

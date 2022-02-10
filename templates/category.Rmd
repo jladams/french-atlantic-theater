@@ -19,8 +19,8 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FA
 library(tidyverse)
 ```
 
-```{r}
-df <- read_csv(params$cat_file)
+```{r message = FALSE}
+df <- read_csv(params$cat_file, col_types = cols())
 ```
 
 ```{r results='asis'}
