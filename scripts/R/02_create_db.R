@@ -410,7 +410,11 @@ both_persons <- person_standard %>%
     Name
   ) %>%
   bind_rows(second_person) %>%
-  distinct()
+  distinct() %>%
+  # If there are no identifiers and no name, "Name" is created from "Word"
+  mutate(
+    Name = ifelse(if_all(ISNI:Name, ~ is.na(.x)), Word, Name)
+  )
 
 # Create a data frame of people who have any identifier
 with_id <- both_persons %>%
@@ -426,21 +430,6 @@ with_id <- both_persons %>%
     Name = ifelse(is.na(Name), first(Word), Name)
   )
 
-# Figure out what the highest person_id that has been created so far
-highest_id <- max(with_id$person_id)
-
-# Create a dataset of people without IDs
-without_id <- both_persons %>%
-  filter(
-    if_all(ISNI:Name, ~ is.na(.x))
-  ) %>%
-  distinct() %>%
-  # Add a "Name" column for compatibility with the with_id data frame
-  mutate(Name = Word) %>%
-  group_by(Word) %>%
-  # Add new id number to the highest id from the other data set to make sure they don't overlap
-  mutate(person_id = cur_group_id() + highest_id)
-
 ### Aliases --------------
 # Create aliases table using the distinct names from df
 aliases <- df %>%
@@ -448,8 +437,8 @@ aliases <- df %>%
   distinct(alias = Word) %>%
   mutate(alias_id = row_number())
 
-# Combine the with_id and without_id tables
-person_with_alias <- bind_rows(with_id, without_id) %>%
+# Set up the standardized names and combine them with alias data
+person_with_alias <- with_id %>%
   rename(
     alias = Word,
     person = Name
@@ -471,10 +460,12 @@ pwa_nas <- person_with_alias %>%
   mutate(person_id = row_number() + pwa_highest)
 
 # Remove rows with NA for person_id, add on the corrected data
+# Also set the "person" field equivalent to "alias" if it is NA
 person_with_alias_fixed <- person_with_alias %>%
   ungroup() %>%
   filter(!is.na(person_id)) %>%
-  bind_rows(pwa_nas)
+  bind_rows(pwa_nas) %>%
+  mutate(person = ifelse(is.na(person), alias, person))
 
 ### Person Table --------------
 # Create persons table

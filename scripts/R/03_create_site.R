@@ -139,6 +139,7 @@ cat("\n")
 ## Performances -------
 invisible(
   lapply(1:nrow(perf_venue), function(i) {
+    # print(paste0("Performance ", i))
     cat(paste0("Performances...", format(round(i/nrow(perf_venue) * 100, 2), digits = 5, nsmall = 2), "%", "\r"))
     performance <- perf_venue$performance[i]
     performance_id <- perf_venue$performance_id[i]
@@ -207,6 +208,7 @@ cat("\n")
 ## Persons -------
 invisible(
   lapply(1:nrow(persons), function(i) {
+    # print(paste0("Person ", i))
     cat(paste0("Persons...", format(round(i/nrow(persons) * 100, 2), digits = 5, nsmall = 2), "%", "\r"))
     person <- persons$person[i]
     person_id <- persons$person_id[i]
