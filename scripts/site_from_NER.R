@@ -1,7 +1,11 @@
 # Meant to be run after Python scripts for Named Entity Recognition
 # Create necessary directories
 necessary_dirs <- c(
+  "images",
+  "other_output",
+  "other_output/images",
   "site", 
+  "site/images",
   "site/document", 
   "site/genre",
   "site/performance",
@@ -32,4 +36,8 @@ rm(list = ls())
 
 # Create search index so that the search boxes on each page work
 source("scripts/R/04_build_index.R")
+rm(list = ls())
+
+# Create other visualizations for images that get used in static pages or elsewhere
+source("scripts/R/05_other_visualizations.R")
 rm(list = ls())

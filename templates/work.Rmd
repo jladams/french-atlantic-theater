@@ -48,9 +48,19 @@ ids <- works %>%
   filter(work_id == params$work_id) %>%
   distinct(work_id, ISNI, VIAF, OCLC, WIKI, Google_Books) %>%
   pivot_longer(-work_id, names_to = "source", values_to = "id") %>%
-  mutate(print_id = paste0(source, ": ", id)) %>%
   filter(!is.na(id)) %>%
-  arrange(source)
+  arrange(source) %>%
+  mutate(
+    link = case_when(
+      source == "ISNI" ~ paste0("<a href='https://isni.org/isni/", str_remove_all(id, pattern = "\\s"), "'>link</a>"),
+      source == "VIAF" ~ paste0("<a href='https://viaf.org/viaf/", str_remove_all(id, pattern = "\\s"), "'>link</a>"),
+      source == "OCLC" ~ paste0("<a href='https://worldcat.org/oclc/", str_remove_all(id, pattern = "\\s"), "'>link</a>"),
+      source == "WIKI" ~ paste0("<a href='https://www.wikidata.org/wiki/", str_remove_all(id, pattern = "\\s"), "'>link</a>"),
+      source == "Google_Books" ~ "---"
+    )
+  ) %>%
+  mutate(print_id = paste0(source, ": ", id, " (", link, ")"))
+
 
 if(nrow(ids) > 0) {
   for(i in 1:nrow(ids)) {
@@ -100,7 +110,7 @@ perf_titles <- works %>%
   left_join(venues, by = "venue_id") %>%
   mutate(
     perf_link = ifelse(!is.na(performance_id), paste0("<a href='../performance/", performance_id, ".html'>Performance</a>"), ""),
-    venue_link = ifelse(!is.na(venue_id), paste0("<a href='../performance/", venue_id, ".html'>", venue, "</a>"), "")
+    venue_link = ifelse(!is.na(venue_id), paste0("<a href='../venue/", venue_id, ".html'>", venue, "</a>"), "")
   ) %>%
   select(
     Date = date,

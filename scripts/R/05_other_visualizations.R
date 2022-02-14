@@ -6,13 +6,18 @@ library(ggnetwork)
 
 documents <- read_csv("./data/processed/db_tables/document.csv")
 venues <- read_csv("./data/processed/db_tables/venue.csv")
-performances <- read_csv("./data/processed/db_tables/performance.csv", col_types = "cnDccc")
-works <- read_csv("./data/processed/db_tables/work.csv")
+performances <- read_csv("./data/processed/db_tables/performance.csv", col_types = "cnDccccccc")
+works <- read_csv("./data/processed/db_tables/work.csv", col_types = "ncccccc")
+titles <- read_csv("./data/processed/db_tables/title.csv")
 genres <- read_csv("./data/processed/db_tables/genre.csv")
 persons <- read_csv("./data/processed/db_tables/person.csv")
+aliases <- read_csv("./data/processed/db_tables/alias.csv")
 document_has_venue <- read_csv("./data/processed/db_tables/document_has_venue.csv")
+document_has_performance <- read_csv("./data/processed/db_tables/document_has_performance.csv")
 performance_has_work <- read_csv("./data/processed/db_tables/performance_has_work.csv")
+person_has_alias <- read_csv("./data/processed/db_tables/person_has_alias.csv")
 person_has_performance <- read_csv("./data/processed/db_tables/person_has_performance.csv")
+work_has_title <- read_csv("./data/processed/db_tables/work_has_title.csv")
 work_has_person <- read_csv("./data/processed/db_tables/work_has_person.csv")
 work_has_genre <- read_csv("./data/processed/db_tables/work_has_genre.csv")
 
@@ -187,5 +192,124 @@ ggplot(yearly_opera, aes(x = year, y = n, color = work)) +
 ggsave("./other_output/images/opera.png", width = 6, height = 3)
 ggsave("./site/images/opera.png", width = 6, height = 3)
 ggsave("./images/opera.png", width = 6, height = 3)
+
+top_venues <- performance_has_work %>%
+  left_join(performances) %>%
+  left_join(venues) %>%
+  filter(!is.na(venue)) %>%
+  group_by(venue_id, venue) %>%
+  tally() %>%
+  ungroup() %>%
+  top_n(4) %>%
+  arrange(-n)
+
+top_genres_per_venue <- performance_has_work %>%
+  left_join(performances) %>%
+  left_join(venues) %>%
+  select(-title_id) %>%
+  filter(venue_id %in% top_venues$venue_id) %>%
+  left_join(work_has_genre) %>%
+  left_join(genres) %>%
+  filter(!is.na(genre_id)) %>%
+  group_by(venue_id, venue, genre_id, genre) %>%
+  tally() %>%
+  group_by(venue_id, venue) %>%
+  top_n(5)
+
+top_venues_genre <- performance_has_work %>%
+  left_join(performances) %>%
+  left_join(venues) %>%
+  select(-title_id) %>%
+  filter(venue_id %in% top_venues$venue_id) %>%
+  left_join(work_has_genre) %>%
+  left_join(genres) %>%
+  inner_join(select(top_genres_per_venue, -n)) %>%
+  mutate(year = floor_date(date, unit = "year")) %>%
+  group_by(year, venue_id, venue, genre_id, genre) %>%
+  tally() %>%
+  group_by(year, venue_id, venue) %>%
+  top_n(5) %>%
+  ungroup() %>%
+  pivot_wider(names_from = "year", values_from = "n") %>%
+  pivot_longer(cols = !matches("[venue|genre]"), names_to = "year", values_to = "n", values_drop_na = FALSE) %>%
+  mutate(
+    year = as.Date(year),
+    n = ifelse(is.na(n), 0, n)
+  )
+
+for(v in unique(top_venues_genre$venue_id)) {
+  tmp <- top_venues_genre %>%
+    filter(venue_id == v)
+  
+  p <- ggplot(tmp, aes(x = year, y = n, color = genre)) +
+    geom_line() +
+    geom_point() +
+    labs(
+      x = "",
+      y = "Performances",
+      color = "Genre",
+      title = "Yearly Performances",
+      subtitle = paste0("Top Genres at ", unique(tmp$venue)[1])
+    ) +
+    theme_bw()
+  
+  ggsave(paste0("./other_output/images/top_genres_", v, ".png"), plot = p, width = 6, height = 3)
+  ggsave(paste0("./site/images/top_genres_", v, ".png"), plot = p, width = 6, height = 3)
+  ggsave(paste0("./images/top_genres_", v, ".png"), plot = p, width = 6, height = 3)
+  
+}
+
+
+top_works_per_venue <- performance_has_work %>%
+  left_join(performances) %>%
+  left_join(venues) %>%
+  left_join(works) %>%
+  filter(venue_id %in% top_venues$venue_id) %>%
+  group_by(venue_id, venue, work_id, work) %>%
+  tally() %>%
+  group_by(venue_id, venue) %>%
+  top_n(5)
+
+top_venues_work <- performance_has_work %>%
+  left_join(performances) %>%
+  left_join(venues) %>%
+  left_join(works) %>%
+  filter(venue_id %in% top_venues$venue_id) %>%
+  inner_join(select(top_works_per_venue, -n)) %>%
+  mutate(year = floor_date(date, unit = "year")) %>%
+  group_by(year, venue_id, venue, work_id, work) %>%
+  tally() %>%
+  group_by(year, venue_id, venue) %>%
+  top_n(5) %>%
+  ungroup() %>%
+  pivot_wider(names_from = "year", values_from = "n") %>%
+  pivot_longer(cols = !matches("[venue|work]"), names_to = "year", values_to = "n", values_drop_na = FALSE) %>%
+  mutate(
+    year = as.Date(year),
+    n = ifelse(is.na(n), 0, n)
+  )
+
+for(v in unique(top_venues_work$venue_id)) {
+  tmp <- top_venues_work %>%
+    filter(venue_id == v)
+  
+  p <- ggplot(tmp, aes(x = year, y = n, color = work)) +
+    geom_line() +
+    geom_point() +
+    labs(
+      x = "",
+      y = "Performances",
+      color = "Work",
+      title = "Yearly Performances",
+      subtitle = paste0("Top Works at ", unique(tmp$venue)[1])
+    ) +
+    theme_bw()
+  
+  ggsave(paste0("./other_output/images/top_works_", v, ".png"), plot = p, width = 6, height = 3)
+  ggsave(paste0("./site/images/top_works_", v, ".png"), plot = p, width = 6, height = 3)
+  ggsave(paste0("./images/top_works_", v, ".png"), plot = p, width = 6, height = 3)
+  
+}
+
 
 

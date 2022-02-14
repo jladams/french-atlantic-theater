@@ -157,7 +157,6 @@ performances <- df %>%
          third_time = ifelse(!is.na(third_time), as_datetime(paste0(date, " ", third_time)), NA))
 
 # Works -----------
-
 ## Standardizing -----------------
 w_standard <- read_csv("./data/original/standardizing/WORK-tag.csv", col_types = cols(.default = "c")) %>%
   # Something seems to be wrong with the ISNI column, just converting to NA for now
@@ -191,8 +190,13 @@ w_with_id <- w_standard %>%
   group_by(ISNI, VIAF, OCLC, WIKI, Google_Books, Name) %>%
   # If there is no name given, just use the first title ("Word") that appears
   mutate(
-    work_id = cur_group_id(),
     Name = ifelse(is.na(Name), first(Word), Name)
+  ) %>%
+  # Re-group by the same variables, in case adding a "Name" created new matches
+  group_by(ISNI, VIAF, OCLC, WIKI, Google_Books, Name) %>%
+  # Assign work ids
+  mutate(
+    work_id = cur_group_id()
   )
 
 # Figure out what the highest work_id that has been created so far
@@ -426,8 +430,13 @@ with_id <- both_persons %>%
   group_by(ISNI, VIAF, WIKI, CESAR, Name) %>%
   # If there is no name given, just use the first alias ("Word") that appears
   mutate(
-    person_id = cur_group_id(),
     Name = ifelse(is.na(Name), first(Word), Name)
+  ) %>%
+  # Re-group by the same variables, in case adding a "Name" created new matches
+  group_by(ISNI, VIAF, WIKI, CESAR, Name) %>%
+  # Assign person ids
+  mutate(
+    person_id = cur_group_id()
   )
 
 ### Aliases --------------
@@ -447,7 +456,8 @@ person_with_alias <- with_id %>%
   # Add the standardized persons to the "aliases" table
   right_join(
     aliases, by = "alias"
-  )
+  ) %>%
+  distinct()
 
 # Fix missing values in person_id
 # (This happens if the person is missing from the standardizing files)

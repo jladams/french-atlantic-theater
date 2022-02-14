@@ -64,8 +64,16 @@ This person has the following associated authority records:
 ids <- person_info %>%
   distinct(person_id, ISNI, VIAF, WIKI, CESAR) %>%
   pivot_longer(-person_id, names_to = "source", values_to = "id") %>%
-  mutate(print_id = paste0(source, ": ", id)) %>%
-  filter(!is.na(id))
+  filter(!is.na(id)) %>%
+  mutate(
+    link = case_when(
+      source == "ISNI" ~ paste0("<a href='https://isni.org/isni/", str_remove_all(id, pattern = "\\s"), "'>link</a>"),
+      source == "VIAF" ~ paste0("<a href='https://viaf.org/viaf/", str_remove_all(id, pattern = "\\s"), "'>link</a>"),
+      source == "WIKI" ~ paste0("<a href='https://www.wikidata.org/wiki/", str_remove_all(id, pattern = "\\s"), "'>link</a>"),
+      source == "CESAR" ~ paste0("<a href='https://cesar.huma-num.fr/cesar2/people/people.php?fct=edit&person_UOID=", str_remove_all(id, pattern = "\\s"), "'>link</a>")
+    )
+  ) %>%
+  mutate(print_id = paste0(source, ": ", id, " (", link, ")"))
 
 if(nrow(ids) > 0) {
   for(i in 1:nrow(ids)) {
